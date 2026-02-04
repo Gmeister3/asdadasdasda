@@ -9,6 +9,12 @@ This repository contains the Design Description Document for Assignment 1 of COS
 - `latex_template/manuscript.pdf` - Generated PDF document
 - `assignment1 (1).pdf` - Assignment specification
 
+## Important: Before Submission
+
+**You must update the following placeholders in `latex_template/manuscript.tex`:**
+- Line 70: Replace `StudentID` with your actual student ID
+- Line 72: Replace `Author Name` with your actual name
+
 ## Compiling the LaTeX Document
 
 ### Prerequisites
