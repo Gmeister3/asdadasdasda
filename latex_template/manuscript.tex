@@ -67,9 +67,9 @@
 % Document starts
 \begin{document} 
 % Title portion. Note the short title for running heads 
-\title[COSC 3P91 -- Assignment 1]{COSC 3P91 -- Assignment 1 -- StudentID}  
+\title[COSC 3P91 -- Assignment 1]{COSC 3P91 -- Assignment 1 -- 7561517}  
 
-\author{Author Name}
+\author{Gregory Sampson}
 \affiliation{%
   \institution{Brock University}
   \streetaddress{1812 Sir Isaac Brock Way}
@@ -81,7 +81,7 @@
 
 \begin{abstract}
 
-Abstract text...
+This document presents the design description for Assignment 1 of COSC 3P91. The assignment focuses on the design and modeling of a village-war strategy game using UML class diagrams. This document provides a comprehensive explanation and justification of the design decisions, including the package structure, class hierarchies, and relationships that comprise the system architecture.
 
 \end{abstract}
 
@@ -94,96 +94,123 @@ Abstract text...
 \maketitle
 
 
-\section{Network Security Questions}
+\section{Design Description}
 
-Add your assignment answers here... Include tables, algorithms, and figures if needed...
+\subsection{Question 2: System Design Explanation}
 
-\begin{figure}[h!]
-  \centering
-  \includegraphics[width=0.3\linewidth]{images/rosette.eps} 
-  \caption{Example of an image. (you can construct more sophisticated layouts using subfigs)}
-\end{figure}
+This section describes and justifies the UML design decisions for the village-war strategy game system.
 
-\begin{table}[h]
-  \centering
-  % \small
-  \caption{Example of a table (nicely looking tables with booktabs).}
-  \begin{tabular}{llll} %p{1.7cm}
-    \toprule
-    \textbf{Name} & \textbf{ID} & \textbf{Subtotal} & \textbf{Total} \\  
-    \midrule
-  John Doe & jd2001 & 75  & 89 \\
-    \bottomrule
-  \end{tabular}
-\end{table}  
+\subsubsection{Overview of the System Design}
 
-\begin{algorithm}[t]
-  \footnotesize
-  \caption{Example of algorithm}
-  \label{algo1}
-  \KwData{$X_i$; $P_{a_i}$; $R$; $A_i$; $\gamma$; $\epsilon$ }
-  \KwResult{$\pi_i$; $v^*$ } 
+The system is designed to support a simplified real-time village-war strategy game. The architecture emphasizes modularity, extensibility, and clear separation of responsibilities. The design is organized around several core abstractions: Village, Buildings, Villagers, Army Units, Player, and the Game Engine. Each abstraction is represented as a class or hierarchy of classes, with relationships modeled through inheritance, composition, and associations.
 
-  $V=0$; $\pi_i=0$\;
-  \Do{$\Delta < \epsilon$}{
-    $\Delta = 0$\;
-    \For{$x \in X$}{
-      $Av=0$\;
-      \For{$a \in A$}{
-        $x_{n} = A(x)$\;
-        $Av[a] = P_a[x][x_{n}]*(R[x_{n}]+\gamma*V[x_{n}])$\;
-      }
-      $av_{best} = max(Av)$\;
-      $\Delta = max(\Delta, |av_{best}-V[x]|)$\;
-      $V[x] = av_{best}$\;
-      $\pi_i[x]=argmax(Av)$\;
-    }
-  }
-\end{algorithm}
+The goal of the design is to support the required game behaviors: building construction, villager training, army training, upgrading, attack simulation, and village generation. The system is structured to allow future extensions such as new building types, new unit types, and additional game mechanics.
 
+\subsubsection{Package Structure}
 
-\subsection{Question 1}
+To maintain clarity and modularity, the system is divided into conceptual packages:
 
-\lipsum[2-4]
+\begin{itemize}
+  \item \textbf{village} — contains Village, Building, and all building subclasses
+  \item \textbf{inhabitants} — contains Villager and its subclasses
+  \item \textbf{army} — contains Army, ArmyUnit, and unit subclasses
+  \item \textbf{gameengine} — contains GameEngine and AttackResult
+  \item \textbf{player} — contains Player
+  \item \textbf{ui} — contains GameUI
+\end{itemize}
 
+This structure ensures that each subsystem is isolated and can evolve independently.
 
+\subsubsection{Building Hierarchy}
 
-\section{Secured Java Application}
+All buildings inherit from the abstract Building class, which defines shared attributes such as level, health, and type, as well as common operations like upgrade() and repair().
 
-The description of your Java code is here... Include any auxiliary text object for aiding your description (tables, algorithms, figures...)
+Concrete building types include:
 
-Do not forget to cite sources~\cite{GnutellaNet2002} if any!
+\begin{itemize}
+  \item \textbf{Farm} — increases population capacity
+  \item \textbf{ArcherTower} and \textbf{Cannon} — defensive structures with damage and range attributes
+  \item \textbf{Goldmine} and \textbf{LumberMill} — resource-producing buildings
+  \item \textbf{Warehouse} — stores resources
+  \item \textbf{Stable} — supports cavalry units (optional extension)
+\end{itemize}
 
+This hierarchy supports extensibility: new buildings can be added by subclassing Building without modifying existing code.
 
-\subsection{Performance Analysis}
+\subsubsection{Villager Hierarchy}
 
-\lipsum[2-4]
+Villagers share common attributes such as name and energy, represented in the abstract Villager class. Subclasses specialize behavior:
 
+\begin{itemize}
+  \item \textbf{Worker} — constructs buildings
+  \item \textbf{Miner} — extracts gold
+  \item \textbf{Collector} — gathers resources
+  \item \textbf{Lumberjack} — cuts wood
+\end{itemize}
 
-\subsection{Conclusions}
+This design allows the village to manage different villager roles while maintaining a unified interface for training and assignment.
+
+\subsubsection{Army and Army Units}
+
+The Army class maintains a collection of ArmyUnit objects and provides operations for adding units, removing units, and attacking targets.
+
+ArmyUnit is an abstract superclass with shared attributes (damage, health) and an attack() method. Subclasses include:
+
+\begin{itemize}
+  \item \textbf{Knight}
+  \item \textbf{Archer}
+  \item \textbf{Catapult}
+  \item \textbf{Builder} (optional extension)
+\end{itemize}
+
+This hierarchy supports future expansion of unit types and allows the Game Engine to compute attack scores generically.
+
+\subsubsection{Village Class}
+
+The Village class aggregates buildings, villagers, and an army. It provides the core gameplay operations:
+
+\begin{itemize}
+  \item buildBuilding()
+  \item trainVillager()
+  \item trainArmy()
+\end{itemize}
+
+The village also maintains its name and collections of buildings and units. This class acts as the central hub for player progression.
+
+\subsubsection{Game Engine}
+
+The GameEngine coordinates the overall game flow. It maintains references to the active village and the most recent AttackResult. It provides operations such as:
+
+\begin{itemize}
+  \item processGameSpeed()
+  \item startGame()
+  \item endGame()
+\end{itemize}
+
+Although simplified at this stage, the engine is designed to be extended with attack simulation, village generation, scoring, and time management in future assignments.
+
+\subsubsection{Player and UI}
+
+The Player class stores player-specific information such as name and score. It interacts with the village through the Game Engine.
+
+The GameUI class represents the user interface layer. It provides methods for displaying menus and game screens. Although not fully implemented, its presence satisfies the requirement to acknowledge the GUI in the design.
+
+\subsubsection{Design Principles and Justification}
+
+Several object-oriented principles guided the design:
+
+\begin{itemize}
+  \item \textbf{Encapsulation}: Each class manages its own data and behavior.
+  \item \textbf{Inheritance}: Shared behavior is factored into abstract superclasses (Building, Villager, ArmyUnit).
+  \item \textbf{Polymorphism}: The Game Engine and Village can operate on generic types without knowing concrete subclasses.
+  \item \textbf{Extensibility}: New buildings, units, or villagers can be added with minimal changes to existing code.
+  \item \textbf{Separation of concerns}: Game logic, UI, player data, and world entities are kept in separate packages.
+\end{itemize}
+
+This structure ensures the system is maintainable, scalable, and aligned with the assignment's long-term goals.
 
 
 \bibliographystyle{ACM-Reference-Format-Journals}
 \bibliography{acmsmall-sample-bibfile}
-
-
-\appendix
-
-\section{HelloWorld - Use lstlisting environment to add your Java code}
-\begin{spacing}{0.8}
-\begin{lstlisting}[language=Java]
-public class HelloWorld {
-    public static void main(String[] args) {
-        // Prints "Hello, World" to the terminal window.
-        System.out.println("Hello, World");
-    }
-}
-\end{lstlisting}
-\end{spacing} 
-
-\clearpage
-
-\section{Class2}
-asdf
 
 \end{document}
