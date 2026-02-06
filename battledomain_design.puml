@@ -1,0 +1,394 @@
+@startuml BattledomainSystem
+
+' Territory Management Module
+package territorycore {
+    class Stronghold {
+        - commandCenterGrade: int
+        - dwellerCount: int
+        - dwellerLimit: int
+        - coinsStored: int
+        - metalStored: int
+        - planksStored: int
+        - coinVault: int
+        - metalVault: int
+        - plankVault: int
+        - shieldModeOn: boolean
+        - shieldExpiry: long
+        - edificeRegistry: List<Edifice>
+        - reputationPoints: int
+        + Stronghold()
+        + erectEdifice(e: Edifice): boolean
+        + tearDownEdifice(e: Edifice): void
+        + promoteCommandCenter(): boolean
+        + checkUpgradeAllowed(e: Edifice): boolean
+        + tallyDefensePower(): int
+        + tallyAssaultPower(): int
+        + assessTreasury(): int
+        + addToStockpile(c: int, m: int, p: int): void
+        + spendFromStockpile(c: int, m: int, p: int): boolean
+        + queryShieldActive(): boolean
+        + engageShield(millisecs: long): void
+        + awardReputation(pts: int): void
+    }
+
+    abstract class Edifice {
+        # grade: int
+        # gradeLimit: int
+        # integrity: int
+        # integrityMax: int
+        # coinsBudget: int
+        # metalBudget: int
+        # planksBudget: int
+        # dwellersNeeded: int
+        # boostDuration: long
+        # boostInProgress: boolean
+        # boostStartMoment: long
+        + Edifice(startGrade: int)
+        + applyBoost(): boolean
+        + queryBoostDone(): boolean
+        + fetchGrade(): int
+        + fetchIntegrity(): int
+        + acceptHarm(harm: int): void
+        + fixDamage(): void
+        + calculateBoostPrice(): SupplyPackage
+        {abstract} + identifyType(): String
+    }
+
+    class CommandHub extends Edifice {
+        - unlockedTypes: List<String>
+        + CommandHub()
+        + identifyType(): String
+        + grantAccess(category: String): void
+        + verifyAccess(category: String): boolean
+    }
+
+    class NourishmentPlot extends Edifice {
+        - rationsYield: int
+        - dwellerCapacity: int
+        + NourishmentPlot()
+        + identifyType(): String
+        + provideRations(): int
+        + supportDwellers(): int
+    }
+
+    class CoinQuarry extends Edifice {
+        - yieldPerCycle: int
+        - operatorSlots: int
+        - operatorsActive: int
+        - sourceDrained: boolean
+        + CoinQuarry()
+        + identifyType(): String
+        + assignOperator(op: Operator): boolean
+        + removeOperator(op: Operator): void
+        + yieldCoins(): int
+    }
+
+    class MetalPit extends Edifice {
+        - yieldPerCycle: int
+        - operatorSlots: int
+        - operatorsActive: int
+        - sourceDrained: boolean
+        + MetalPit()
+        + identifyType(): String
+        + assignOperator(op: Operator): boolean
+        + removeOperator(op: Operator): void
+        + yieldMetal(): int
+    }
+
+    class PlankMill extends Edifice {
+        - yieldPerCycle: int
+        - operatorSlots: int
+        - operatorsActive: int
+        - sourceDrained: boolean
+        + PlankMill()
+        + identifyType(): String
+        + assignOperator(op: Operator): boolean
+        + removeOperator(op: Operator): void
+        + yieldPlanks(): int
+    }
+}
+
+' Fortification Module
+package fortifications {
+    abstract class Barricade extends Edifice {
+        # harmOutput: int
+        # reachDistance: int
+        # strikeFrequency: double
+        + Barricade(startGrade: int)
+        + unleashAttack(foe: Raider): int
+        + queryHarmOutput(): int
+        + queryReach(): int
+        {abstract} + classifyBarricade(): String
+    }
+
+    class ProjectileTurret extends Barricade {
+        + ProjectileTurret()
+        + classifyBarricade(): String
+        + identifyType(): String
+    }
+
+    class BombardStation extends Barricade {
+        + BombardStation()
+        + classifyBarricade(): String
+        + identifyType(): String
+    }
+}
+
+' Dwellers Module
+package dwellers {
+    abstract class Occupant {
+        # grade: int
+        # gradeLimit: int
+        # stamina: int
+        # staminaMax: int
+        # coinsToPrepare: int
+        # metalToPrepare: int
+        # planksToPrepare: int
+        # preparationSpan: long
+        # preparationActive: boolean
+        # preparationLaunch: long
+        + Occupant(startGrade: int)
+        + applyBoost(): boolean
+        + verifyPreparationDone(): boolean
+        + fetchGrade(): int
+        + fetchStamina(): int
+        + sufferWound(wound: int): void
+        + recoverHealth(): void
+        {abstract} + categorizeOccupant(): String
+    }
+
+    abstract class Artisan extends Occupant {
+        # efficiencyRating: int
+        + Artisan(startGrade: int)
+        + executeWork(): void
+        + contributeDefense(): int
+        {abstract} + specifyArtisanRole(): String
+    }
+
+    class Builder extends Artisan {
+        - idleStatus: int
+        + Builder()
+        + categorizeOccupant(): String
+        + specifyArtisanRole(): String
+        + fabricateEdifice(e: Edifice): void
+        + enhanceEdifice(e: Edifice): void
+        + cultivatePlots(): int
+    }
+
+    class Operator extends Artisan {
+        - focusResource: String
+        - linkedFacility: Edifice
+        + Operator(focus: String)
+        + categorizeOccupant(): String
+        + specifyArtisanRole(): String
+        + harvestResource(): int
+        + linkToFacility(facility: Edifice): void
+    }
+
+    class Lumberjack extends Artisan {
+        - linkedMill: PlankMill
+        + Lumberjack()
+        + categorizeOccupant(): String
+        + specifyArtisanRole(): String
+        + chopTimber(): int
+        + linkToMill(mill: PlankMill): void
+    }
+}
+
+' Assault Forces Module
+package assaultunits {
+    class WarBand {
+        - warriors: List<Raider>
+        - capacityMax: int
+        - forceStrength: int
+        + WarBand()
+        + enlistWarrior(w: Raider): boolean
+        + dischargeWarrior(w: Raider): void
+        + measureStrength(): int
+        + launchRaid(destination: Stronghold): RaidReport
+        + countWarriors(): int
+        + checkEmpty(): boolean
+    }
+
+    abstract class Raider extends Occupant {
+        # impactForce: int
+        # strikeRadius: int
+        # assaultRate: double
+        + Raider(startGrade: int)
+        + demolishEdifice(target: Edifice): int
+        + destroyBarricade(target: Barricade): int
+        + queryImpact(): int
+        + queryRadius(): int
+        {abstract} + specifyRaiderClass(): String
+    }
+
+    class FootSoldier extends Raider {
+        + FootSoldier()
+        + categorizeOccupant(): String
+        + specifyRaiderClass(): String
+    }
+
+    class Marksman extends Raider {
+        + Marksman()
+        + categorizeOccupant(): String
+        + specifyRaiderClass(): String
+    }
+
+    class Cavalry extends Raider {
+        + Cavalry()
+        + categorizeOccupant(): String
+        + specifyRaiderClass(): String
+    }
+
+    class Artillery extends Raider {
+        + Artillery()
+        + categorizeOccupant(): String
+        + specifyRaiderClass(): String
+    }
+}
+
+' Game Management Module
+package gamecontrol {
+    class BattleDirector {
+        - clockTicker: long
+        - dice: Random
+        + BattleDirector()
+        + tickClock(delta: long): void
+        + readClock(): long
+        + confirmBoostReady(e: Edifice): boolean
+        + confirmPreparationReady(o: Occupant): boolean
+        + permitBoost(s: Stronghold, e: Edifice): boolean
+        + permitPreparation(s: Stronghold, o: Occupant): boolean
+        + fabricateOpponent(strength: int): Stronghold
+        + offerTargets(player: Stronghold): List<Stronghold>
+        + judgeConflict(attackers: WarBand, defenders: Stronghold): RaidReport
+        + scoreDefenses(s: Stronghold): int
+        + scoreOffense(w: WarBand): int
+        + rollChance(): int
+        + spawnHostiles(level: int): WarBand
+        + activateShield(s: Stronghold, duration: long): void
+    }
+
+    class RaidReport {
+        - triumph: boolean
+        - triumphDegree: int
+        - plunderedGoods: TreasuryHaul
+        - attackerFallen: int
+        - defenderRuins: int
+        + RaidReport(won: boolean, degree: int)
+        + checkTriumph(): boolean
+        + readDegree(): int
+        + extractHaul(): TreasuryHaul
+        + recordHaul(haul: TreasuryHaul): void
+        + countFallen(): int
+        + assessRuins(): int
+    }
+
+    class TreasuryHaul {
+        - coinsLooted: int
+        - metalLooted: int
+        - planksLooted: int
+        + TreasuryHaul(c: int, m: int, p: int)
+        + readCoins(): int
+        + readMetal(): int
+        + readPlanks(): int
+    }
+
+    class SupplyPackage {
+        - coinsRequired: int
+        - metalRequired: int
+        - planksRequired: int
+        - dwellersRequired: int
+        + SupplyPackage(c: int, m: int, p: int, d: int)
+        + readCoins(): int
+        + readMetal(): int
+        + readPlanks(): int
+        + readDwellers(): int
+    }
+}
+
+' Player Module
+package playerspace {
+    class Warlord {
+        - accountID: String
+        - warlordName: String
+        - controlledStronghold: Stronghold
+        - raidsWon: int
+        - siegesResisted: int
+        - wealthAccumulated: int
+        + Warlord(id: String, name: String)
+        + queryStronghold(): Stronghold
+        + claimStronghold(s: Stronghold): void
+        + logRaidVictory(): void
+        + logSiegeVictory(): void
+        + addWealth(amount: int): void
+        + computeRank(): int
+    }
+}
+
+' Interface Module
+package frontend {
+    interface DisplayPortal {
+        + showStronghold(s: Stronghold): void
+        + showBuildOptions(): void
+        + showTrainOptions(): void
+        + showRaidTargets(targets: List<Stronghold>): void
+        + showRaidResults(report: RaidReport): void
+        + showBoostStatus(e: Edifice): void
+        + readCommand(): String
+        + announceMessage(msg: String): void
+    }
+
+    class TextPortal implements DisplayPortal {
+        + TextPortal()
+        + showStronghold(s: Stronghold): void
+        + showBuildOptions(): void
+        + showTrainOptions(): void
+        + showRaidTargets(targets: List<Stronghold>): void
+        + showRaidResults(report: RaidReport): void
+        + showBoostStatus(e: Edifice): void
+        + readCommand(): String
+        + announceMessage(msg: String): void
+    }
+}
+
+' Associations
+Stronghold "1" *-- "0..*" Edifice : contains
+Stronghold "1" -- "1" Warlord : ruled by
+
+Edifice <|-- CommandHub
+Edifice <|-- NourishmentPlot
+Edifice <|-- CoinQuarry
+Edifice <|-- MetalPit
+Edifice <|-- PlankMill
+Edifice <|-- Barricade
+
+Barricade <|-- ProjectileTurret
+Barricade <|-- BombardStation
+
+Occupant <|-- Artisan
+Occupant <|-- Raider
+
+Artisan <|-- Builder
+Artisan <|-- Operator
+Artisan <|-- Lumberjack
+
+Raider <|-- FootSoldier
+Raider <|-- Marksman
+Raider <|-- Cavalry
+Raider <|-- Artillery
+
+WarBand "1" *-- "0..*" Raider : commands
+
+BattleDirector "1" -- "1..*" Stronghold : orchestrates
+BattleDirector "1" ..> RaidReport : generates
+BattleDirector "1" ..> WarBand : creates
+
+RaidReport "1" *-- "1" TreasuryHaul : contains
+
+Warlord "1" -- "1" Stronghold : governs
+Warlord "1" ..> DisplayPortal : utilizes
+
+DisplayPortal <|.. TextPortal
+
+@enduml
