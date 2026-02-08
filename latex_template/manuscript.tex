@@ -169,21 +169,663 @@ Do not forget to cite sources~\cite{GnutellaNet2002} if any!
 
 \appendix
 
-\section{HelloWorld - Use lstlisting environment to add your Java code}
+\section{Resources Package - ResourceType Enum}
 \begin{spacing}{0.8}
 \begin{lstlisting}[language=Java]
-public class HelloWorld {
-    public static void main(String[] args) {
-        // Prints "Hello, World" to the terminal window.
-        System.out.println("Hello, World");
-    }
+package resources;
+
+public enum ResourceType {
+    GOLD,
+    IRON,
+    WOOD,
+    FOOD
 }
 \end{lstlisting}
-\end{spacing} 
+\end{spacing}
+
+\section{Resources Package - Cost Class}
+\begin{spacing}{0.8}
+\begin{lstlisting}[language=Java]
+package resources;
+
+public class Cost {
+    private int gold;
+    private int iron;
+    private int wood;
+    private int time;
+    
+    public Cost(int gold, int iron, int wood, int time) {
+        this.gold = gold;
+        this.iron = iron;
+        this.wood = wood;
+        this.time = time;
+    }
+    
+    public int getTotalValue() {
+        return gold + iron + wood;
+    }
+    
+    public Cost multiply(double factor) {
+        return new Cost(
+            (int)(gold * factor),
+            (int)(iron * factor),
+            (int)(wood * factor),
+            (int)(time * factor)
+        );
+    }
+    
+    public int getGold() { return gold; }
+    public int getIron() { return iron; }
+    public int getWood() { return wood; }
+    public int getTime() { return time; }
+}
+\end{lstlisting}
+\end{spacing}
 
 \clearpage
 
-\section{Class2}
-asdf
+\section{Resources Package - ResourceManager Class}
+\begin{spacing}{0.8}
+\begin{lstlisting}[language=Java]
+package resources;
+
+public class ResourceManager {
+    private int gold;
+    private int goldCapacity;
+    private int iron;
+    private int ironCapacity;
+    private int wood;
+    private int woodCapacity;
+    private int foodProduction;
+    private int foodConsumption;
+    
+    public void addGold(int amount) {
+        gold = Math.min(gold + amount, goldCapacity);
+    }
+    
+    public void addIron(int amount) {
+        iron = Math.min(iron + amount, ironCapacity);
+    }
+    
+    public void addWood(int amount) {
+        wood = Math.min(wood + amount, woodCapacity);
+    }
+    
+    public boolean consumeResources(Cost cost) {
+        if (hasEnoughResources(cost)) {
+            gold -= cost.getGold();
+            iron -= cost.getIron();
+            wood -= cost.getWood();
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean hasEnoughResources(Cost cost) {
+        return gold >= cost.getGold() && 
+               iron >= cost.getIron() && 
+               wood >= cost.getWood();
+    }
+    
+    public Cost getAvailableLoot() {
+        return new Cost(gold / 2, iron / 2, wood / 2, 0);
+    }
+    
+    public boolean canSupport(int population) {
+        return foodProduction >= foodConsumption + population;
+    }
+}
+\end{lstlisting}
+\end{spacing}
+
+\clearpage
+
+\section{Buildings Package - Building Abstract Class}
+\begin{spacing}{0.8}
+\begin{lstlisting}[language=Java]
+package buildings;
+
+import resources.Cost;
+
+public abstract class Building {
+    protected int level;
+    protected int maxLevel;
+    protected int hitPoints;
+    protected int maxHitPoints;
+    protected int positionX;
+    protected int positionY;
+    protected Cost buildCost;
+    protected int buildTime;
+    protected boolean isUpgrading;
+    protected long upgradeStartTime;
+    
+    public Building(int maxLevel, int maxHitPoints, Cost buildCost) {
+        this.maxLevel = maxLevel;
+        this.maxHitPoints = maxHitPoints;
+        this.hitPoints = maxHitPoints;
+        this.buildCost = buildCost;
+        this.level = 1;
+        this.isUpgrading = false;
+    }
+    
+    public void upgrade() {
+        if (!isMaxLevel() && !isUpgrading) {
+            isUpgrading = true;
+            upgradeStartTime = System.currentTimeMillis();
+        }
+    }
+    
+    public Cost getUpgradeCost() {
+        return buildCost.multiply(level * 1.5);
+    }
+    
+    public boolean isMaxLevel() {
+        return level >= maxLevel;
+    }
+    
+    public void takeDamage(int damage) {
+        hitPoints = Math.max(0, hitPoints - damage);
+    }
+    
+    public void repair() {
+        hitPoints = maxHitPoints;
+    }
+    
+    public void completeUpgrade() {
+        if (isUpgrading) {
+            level++;
+            isUpgrading = false;
+            maxHitPoints = (int)(maxHitPoints * 1.2);
+            hitPoints = maxHitPoints;
+        }
+    }
+    
+    public int getLevel() { return level; }
+    public int getHitPoints() { return hitPoints; }
+}
+\end{lstlisting}
+\end{spacing}
+
+\clearpage
+
+\section{Buildings Package - VillageHall Class}
+\begin{spacing}{0.8}
+\begin{lstlisting}[language=Java]
+package buildings;
+
+import resources.Cost;
+
+public class VillageHall extends Building {
+    private int villageLevel;
+    
+    public VillageHall() {
+        super(10, 5000, new Cost(1000, 500, 500, 600));
+        this.villageLevel = 1;
+    }
+    
+    public int getAllowedBuildingLevel() {
+        return villageLevel;
+    }
+    
+    public int getVillageLevel() {
+        return villageLevel;
+    }
+    
+    @Override
+    public void completeUpgrade() {
+        super.completeUpgrade();
+        villageLevel = level;
+    }
+}
+\end{lstlisting}
+\end{spacing}
+
+\section{Buildings Package - Farm Class}
+\begin{spacing}{0.8}
+\begin{lstlisting}[language=Java]
+package buildings;
+
+import resources.Cost;
+
+public class Farm extends ProductionBuilding {
+    private int foodPerHour;
+    private int populationSupport;
+    
+    public Farm() {
+        super(8, 1000, new Cost(100, 50, 200, 120));
+        this.foodPerHour = 50;
+        this.populationSupport = 10;
+        this.maxWorkers = 3;
+        this.productionRate = 20;
+    }
+    
+    public int getFoodProduction() {
+        return foodPerHour + getProduction();
+    }
+    
+    public int getPopulationSupport() {
+        return populationSupport * level;
+    }
+}
+\end{lstlisting}
+\end{spacing}
+
+\clearpage
+
+\section{Buildings Package - ArcherTower Class}
+\begin{spacing}{0.8}
+\begin{lstlisting}[language=Java]
+package buildings;
+
+import resources.Cost;
+
+public class ArcherTower extends DefenseBuilding {
+    private int arrowCount;
+    
+    public ArcherTower() {
+        super(8, 1500, new Cost(300, 200, 100, 240));
+        this.damage = 50;
+        this.range = 10;
+        this.attackSpeed = 1.0;
+        this.arrowCount = 100;
+    }
+    
+    public void reload() {
+        arrowCount = 100;
+    }
+}
+\end{lstlisting}
+\end{spacing}
+
+\section{Inhabitants Package - Inhabitant Abstract Class}
+\begin{spacing}{0.8}
+\begin{lstlisting}[language=Java]
+package inhabitants;
+
+import resources.Cost;
+
+public abstract class Inhabitant {
+    protected int level;
+    protected int maxLevel;
+    protected int hitPoints;
+    protected int maxHitPoints;
+    protected Cost trainingCost;
+    protected int trainingTime;
+    protected int foodConsumption;
+    protected boolean isUpgrading;
+    
+    public Inhabitant(int maxLevel, int maxHitPoints) {
+        this.maxLevel = maxLevel;
+        this.maxHitPoints = maxHitPoints;
+        this.hitPoints = maxHitPoints;
+        this.level = 1;
+        this.isUpgrading = false;
+    }
+    
+    public void upgrade() {
+        if (!isUpgrading && level < maxLevel) {
+            isUpgrading = true;
+        }
+    }
+    
+    public Cost getUpgradeCost() {
+        return trainingCost.multiply(level * 1.5);
+    }
+    
+    public void takeDamage(int damage) {
+        hitPoints = Math.max(0, hitPoints - damage);
+    }
+    
+    public boolean isAlive() {
+        return hitPoints > 0;
+    }
+    
+    public void heal() {
+        hitPoints = maxHitPoints;
+    }
+}
+\end{lstlisting}
+\end{spacing}
+
+\clearpage
+
+\section{Inhabitants Package - Worker Class}
+\begin{spacing}{0.8}
+\begin{lstlisting}[language=Java]
+package inhabitants;
+
+import resources.Cost;
+import buildings.Building;
+
+public class Worker extends Inhabitant {
+    private boolean isIdle;
+    private String currentTask;
+    
+    public Worker() {
+        super(5, 100);
+        this.trainingCost = new Cost(50, 0, 0, 30);
+        this.foodConsumption = 1;
+        this.isIdle = true;
+        this.currentTask = "";
+    }
+    
+    public void buildStructure(Building b) {
+        isIdle = false;
+        currentTask = "Building";
+    }
+    
+    public void produceFood() {
+        isIdle = false;
+        currentTask = "Producing Food";
+    }
+    
+    public void repair(Building b) {
+        isIdle = false;
+        currentTask = "Repairing";
+    }
+    
+    public void setIdle(boolean idle) {
+        this.isIdle = idle;
+        if (idle) {
+            currentTask = "";
+        }
+    }
+}
+\end{lstlisting}
+\end{spacing}
+
+\section{Inhabitants Package - Soldier Class}
+\begin{spacing}{0.8}
+\begin{lstlisting}[language=Java]
+package inhabitants;
+
+import resources.Cost;
+
+public class Soldier extends ArmyUnit {
+    private int shield;
+    
+    public Soldier() {
+        super(6, 150);
+        this.trainingCost = new Cost(100, 50, 0, 60);
+        this.damage = 30;
+        this.attackRange = 1;
+        this.movementSpeed = 2;
+        this.shield = 20;
+        this.foodConsumption = 2;
+    }
+    
+    public void block() {
+        // Implementation for blocking attacks
+    }
+}
+\end{lstlisting}
+\end{spacing}
+
+\clearpage
+
+\section{Core Package - Village Class}
+\begin{spacing}{0.8}
+\begin{lstlisting}[language=Java]
+package core;
+
+import java.util.List;
+import java.util.ArrayList;
+import buildings.Building;
+import buildings.VillageHall;
+import inhabitants.Inhabitant;
+import resources.ResourceManager;
+
+public class Village {
+    private String name;
+    private int level;
+    private int population;
+    private int maxPopulation;
+    private int area;
+    private int maxArea;
+    private VillageHall villageHall;
+    private List<Building> buildings;
+    private List<Inhabitant> inhabitants;
+    private ResourceManager resources;
+    private int defenseScore;
+    private int attackScore;
+    private long guardPeriodEnd;
+    private boolean inGuardPeriod;
+    
+    public Village(String name) {
+        this.name = name;
+        this.level = 1;
+        this.population = 0;
+        this.maxPopulation = 50;
+        this.area = 0;
+        this.maxArea = 100;
+        this.buildings = new ArrayList<>();
+        this.inhabitants = new ArrayList<>();
+        this.resources = new ResourceManager();
+        this.villageHall = new VillageHall();
+        this.inGuardPeriod = true;
+        this.guardPeriodEnd = System.currentTimeMillis() 
+            + (7 * 24 * 60 * 60 * 1000);
+    }
+    
+    public boolean addBuilding(Building b) {
+        if (canBuild(b)) {
+            buildings.add(b);
+            return true;
+        }
+        return false;
+    }
+    
+    public void removeBuilding(Building b) {
+        buildings.remove(b);
+    }
+    
+    public boolean addInhabitant(Inhabitant i) {
+        if (population < maxPopulation) {
+            inhabitants.add(i);
+            population++;
+            return true;
+        }
+        return false;
+    }
+    
+    public int calculateDefenseScore() {
+        defenseScore = 0;
+        for (Building b : buildings) {
+            defenseScore += b.getLevel() * 10;
+        }
+        return defenseScore;
+    }
+    
+    public boolean canBuild(Building b) {
+        return area + 10 <= maxArea;
+    }
+}
+\end{lstlisting}
+\end{spacing}
+
+\clearpage
+
+\section{Core Package - Player Class}
+\begin{spacing}{0.8}
+\begin{lstlisting}[language=Java]
+package core;
+
+import buildings.Building;
+import inhabitants.Inhabitant;
+import engine.AttackResult;
+
+public class Player {
+    private String playerName;
+    private String playerId;
+    private Village village;
+    private int rank;
+    private int attackWins;
+    private int attackLosses;
+    private int defenseWins;
+    private int defenseLosses;
+    private int totalLoot;
+    
+    public Player(String name) {
+        this.playerName = name;
+        this.playerId = generatePlayerId();
+        this.village = new Village(name + "'s Village");
+        this.rank = 0;
+    }
+    
+    private String generatePlayerId() {
+        return "P" + System.currentTimeMillis();
+    }
+    
+    public boolean buildBuilding(Building b) {
+        return village.addBuilding(b);
+    }
+    
+    public boolean upgradeBuilding(Building b) {
+        b.upgrade();
+        return true;
+    }
+    
+    public boolean upgradeInhabitant(Inhabitant i) {
+        i.upgrade();
+        return true;
+    }
+    
+    public void updateRank() {
+        rank = (attackWins * 10) - (attackLosses * 5) 
+            + (defenseWins * 8) - (defenseLosses * 3);
+    }
+    
+    public Village getVillage() {
+        return village;
+    }
+}
+\end{lstlisting}
+\end{spacing}
+
+\clearpage
+
+\section{Engine Package - GameEngine Class}
+\begin{spacing}{0.8}
+\begin{lstlisting}[language=Java]
+package engine;
+
+import java.util.List;
+import java.util.ArrayList;
+import core.Player;
+import core.Village;
+import buildings.Building;
+
+public class GameEngine {
+    private long currentTime;
+    private double gameSpeed;
+    private AttackSimulator attackSimulator;
+    private VillageGenerator villageGenerator;
+    private ScoreCalculator scoreCalculator;
+    private List<Player> players;
+    
+    public GameEngine() {
+        this.currentTime = System.currentTimeMillis();
+        this.gameSpeed = 1.0;
+        this.attackSimulator = new AttackSimulator();
+        this.villageGenerator = new VillageGenerator();
+        this.scoreCalculator = new ScoreCalculator();
+        this.players = new ArrayList<>();
+    }
+    
+    public void startGame() {
+        currentTime = System.currentTimeMillis();
+    }
+    
+    public void updateTime() {
+        currentTime = System.currentTimeMillis();
+    }
+    
+    public void processUpgrades(Village v) {
+        // Process building and inhabitant upgrades
+    }
+    
+    public boolean allowBuild(Village v, Building b) {
+        return v.canBuild(b);
+    }
+    
+    public void addPlayer(Player p) {
+        players.add(p);
+    }
+}
+\end{lstlisting}
+\end{spacing}
+
+\section{Engine Package - AttackResult Class}
+\begin{spacing}{0.8}
+\begin{lstlisting}[language=Java]
+package engine;
+
+import resources.Cost;
+
+public class AttackResult {
+    private boolean success;
+    private double successRate;
+    private Cost loot;
+    private int attackerLosses;
+    private int defenderLosses;
+    private int stars;
+    
+    public AttackResult(boolean success, Cost loot) {
+        this.success = success;
+        this.loot = loot;
+        this.attackerLosses = 0;
+        this.defenderLosses = 0;
+        this.stars = success ? 3 : 0;
+    }
+    
+    public boolean isSuccess() { return success; }
+    public Cost getLoot() { return loot; }
+    public int getStars() { return stars; }
+}
+\end{lstlisting}
+\end{spacing}
+
+\clearpage
+
+\section{UI Package - GameUI Class}
+\begin{spacing}{0.8}
+\begin{lstlisting}[language=Java]
+package ui;
+
+import core.Player;
+import engine.GameEngine;
+
+public class GameUI {
+    private Player currentPlayer;
+    private GameEngine gameEngine;
+    
+    public GameUI(Player player, GameEngine engine) {
+        this.currentPlayer = player;
+        this.gameEngine = engine;
+    }
+    
+    public void displayVillage() {
+        System.out.println("=== Village ===");
+        // Display village information
+    }
+    
+    public void displayBuildMenu() {
+        System.out.println("=== Build Menu ===");
+        System.out.println("1. Farm");
+        System.out.println("2. Gold Mine");
+        System.out.println("3. Archer Tower");
+    }
+    
+    public void displayAttackMenu() {
+        System.out.println("=== Attack Menu ===");
+        // Display attack options
+    }
+    
+    public void handleUserInput() {
+        // Handle user input for game actions
+    }
+}
+\end{lstlisting}
+\end{spacing}
 
 \end{document}

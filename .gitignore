@@ -17,3 +17,7 @@ missfont.log
 
 # LaTeX template zip
 latex_template_3P91.zip
+
+# Java compiled files
+bin/
+*.class
