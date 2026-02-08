@@ -94,77 +94,334 @@ This document presents an object-oriented design for a strategic territory conqu
 \maketitle
 
 
-\section{Network Security Questions}
+\section{Introduction}
 
-Add your assignment answers here... Include tables, algorithms, and figures if needed...
+This document provides a comprehensive description and justification of the object-oriented design for a village-war strategy game system. The game follows the mechanics of popular mobile strategy games where players build and upgrade their villages, train armies, and attack other players' villages to collect resources and increase their ranking.
 
-\begin{figure}[h!]
-  \centering
-  \includegraphics[width=0.3\linewidth]{images/rosette.eps} 
-  \caption{Example of an image. (you can construct more sophisticated layouts using subfigs)}
-\end{figure}
+The design employs fundamental object-oriented principles including abstraction, inheritance, polymorphism, and encapsulation to create a flexible and extensible system. The architecture is organized into six distinct packages, each with clearly defined responsibilities, promoting separation of concerns and maintainability.
 
-\begin{table}[h]
-  \centering
-  % \small
-  \caption{Example of a table (nicely looking tables with booktabs).}
-  \begin{tabular}{llll} %p{1.7cm}
-    \toprule
-    \textbf{Name} & \textbf{ID} & \textbf{Subtotal} & \textbf{Total} \\  
-    \midrule
-  John Doe & jd2001 & 75  & 89 \\
-    \bottomrule
-  \end{tabular}
-\end{table}  
+\section{System Overview}
 
-\begin{algorithm}[t]
-  \footnotesize
-  \caption{Example of algorithm}
-  \label{algo1}
-  \KwData{$X_i$; $P_{a_i}$; $R$; $A_i$; $\gamma$; $\epsilon$ }
-  \KwResult{$\pi_i$; $v^*$ } 
+The village-war strategy game system is designed to support the following core behaviors:
 
-  $V=0$; $\pi_i=0$\;
-  \Do{$\Delta < \epsilon$}{
-    $\Delta = 0$\;
-    \For{$x \in X$}{
-      $Av=0$\;
-      \For{$a \in A$}{
-        $x_{n} = A(x)$\;
-        $Av[a] = P_a[x][x_{n}]*(R[x_{n}]+\gamma*V[x_{n}])$\;
-      }
-      $av_{best} = max(Av)$\;
-      $\Delta = max(\Delta, |av_{best}-V[x]|)$\;
-      $V[x] = av_{best}$\;
-      $\pi_i[x]=argmax(Av)$\;
-    }
-  }
-\end{algorithm}
+\begin{itemize}
+  \item \textbf{Building}: Players can construct various buildings in their village, each occupying space and providing specific functionality
+  \item \textbf{Training}: Players can train villagers and army units with different specializations
+  \item \textbf{Upgrading}: Both buildings and inhabitants can be upgraded to higher levels, improving their capabilities
+  \item \textbf{Village Generation}: The system generates AI-controlled villages for players to attack
+  \item \textbf{Attack Exploration}: Players can explore and find villages to attack
+  \item \textbf{Attacking}: Players can deploy armies to attack other villages and collect loot
+\end{itemize}
+
+The system manages resources (gold, iron, wood, food), time-based mechanics (building/training time, guard periods), and complex attack simulations that determine battle outcomes.
+
+\section{Package Structure}
+
+The design is organized into six packages, each with a specific responsibility:
+
+\subsection{Resources Package}
+
+The \texttt{resources} package handles all resource-related functionality. It contains:
+\begin{itemize}
+  \item \texttt{ResourceType} enum defining the four resource types (GOLD, IRON, WOOD, FOOD)
+  \item \texttt{Cost} class representing the cost of actions in terms of resources and time
+  \item \texttt{ResourceManager} class managing resource storage, capacities, and consumption
+\end{itemize}
+
+This package is kept separate to ensure resource management logic is decoupled from game entities, promoting reusability and maintainability.
+
+\subsection{Buildings Package}
+
+The \texttt{buildings} package contains all building-related classes organized in an inheritance hierarchy. This modular organization allows for easy addition of new building types while maintaining common functionality in abstract base classes.
+
+\subsection{Inhabitants Package}
+
+The \texttt{inhabitants} package manages all population entities including workers and military units. The hierarchical structure allows for shared behavior while enabling specialization for different inhabitant types.
+
+\subsection{Core Package}
+
+The \texttt{core} package contains the central game entities:
+\begin{itemize}
+  \item \texttt{Village} - Manages all aspects of a player's village
+  \item \texttt{Player} - Represents player information and actions
+  \item \texttt{Army} - Manages army composition for attacks
+\end{itemize}
+
+\subsection{Engine Package}
+
+The \texttt{engine} package provides game orchestration and simulation logic:
+\begin{itemize}
+  \item \texttt{GameEngine} - Main game loop and time management
+  \item \texttt{AttackSimulator} - Simulates combat between armies and villages
+  \item \texttt{VillageGenerator} - Creates AI villages
+  \item \texttt{ScoreCalculator} - Computes various game scores
+  \item \texttt{AttackResult} - Encapsulates attack outcomes
+\end{itemize}
+
+\subsection{UI Package}
+
+The \texttt{ui} package separates the user interface from game logic, containing the \texttt{GameUI} class that handles player interactions and display.
+
+\section{Building Hierarchy}
+
+The building system uses a carefully designed inheritance hierarchy to maximize code reuse while allowing for specialization.
+
+\subsection{Abstract Building Class}
+
+The \texttt{Building} abstract class serves as the base for all structures. It defines common attributes and behaviors:
+\begin{itemize}
+  \item Level progression (current level, max level)
+  \item Hit points for damage modeling
+  \item Position on the village grid
+  \item Cost and build time
+  \item Upgrade mechanics with time tracking
+\end{itemize}
+
+Key methods include \texttt{upgrade()}, \texttt{getUpgradeCost()}, \texttt{takeDamage()}, and \texttt{repair()}. The upgrade cost scales with level using a multiplier (1.5x per level), balancing progression.
+
+\subsection{VillageHall}
+
+The \texttt{VillageHall} is the most important building, determining the village level and constraining other building upgrades. Players must upgrade the VillageHall to unlock higher levels for other structures.
+
+\subsection{Production Buildings}
+
+An intermediate abstract class \texttt{ProductionBuilding} extends \texttt{Building} to add production mechanics:
+\begin{itemize}
+  \item Worker assignment (maxWorkers, assignedWorkers)
+  \item Production rate that increases with assigned workers
+  \item Resource generation methods
+\end{itemize}
+
+Concrete production buildings inherit from this class:
+\begin{itemize}
+  \item \textbf{Farm}: Produces food and increases population capacity
+  \item \textbf{GoldMine}: Generates gold resources
+  \item \textbf{IronMine}: Generates iron resources
+  \item \textbf{LumberMill}: Generates wood resources
+\end{itemize}
+
+\subsection{Defense Buildings}
+
+Similarly, \texttt{DefenseBuilding} extends \texttt{Building} with defensive attributes:
+\begin{itemize}
+  \item Damage output
+  \item Attack range
+  \item Attack speed
+  \item Target prioritization
+\end{itemize}
+
+Concrete defensive structures include:
+\begin{itemize}
+  \item \textbf{ArcherTower}: Long-range defense with limited ammunition
+  \item \textbf{Cannon}: High damage but slower attack speed
+\end{itemize}
+
+This hierarchy allows adding new building types easily while inheriting common functionality.
+
+\section{Inhabitant Hierarchy}
+
+The inhabitant system models the village population using a similar hierarchical approach.
+
+\subsection{Abstract Inhabitant Class}
+
+The \texttt{Inhabitant} abstract class provides base functionality for all population entities:
+\begin{itemize}
+  \item Level and hit points
+  \item Training cost and time
+  \item Food consumption
+  \item Upgrade mechanics
+  \item Damage handling and healing
+\end{itemize}
+
+\subsection{Workers}
+
+The \texttt{Worker} class represents general-purpose villagers who perform various tasks:
+\begin{itemize}
+  \item Building construction
+  \item Food production
+  \item Building repairs
+  \item Task tracking (idle vs. busy)
+\end{itemize}
+
+Workers are essential for village development but don't participate in combat.
+
+\subsection{Resource Collectors}
+
+An abstract \texttt{Collector} class extends \texttt{Inhabitant} for specialized resource gathering. It adds collection rate and target resource type. Concrete collectors include:
+\begin{itemize}
+  \item \textbf{GoldCollector}: Collects from gold mines
+  \item \textbf{IronCollector}: Collects from iron mines
+  \item \textbf{WoodCollector}: Collects from lumber mills
+\end{itemize}
+
+\subsection{Army Units}
+
+The \texttt{ArmyUnit} abstract class extends \texttt{Inhabitant} with combat capabilities:
+\begin{itemize}
+  \item Damage output
+  \item Attack range
+  \item Movement speed
+  \item Attack methods
+\end{itemize}
+
+Concrete military units provide variety in combat:
+\begin{itemize}
+  \item \textbf{Soldier}: Melee fighter with shield for blocking
+  \item \textbf{Archer}: Ranged attacker with faster movement
+  \item \textbf{Knight}: Heavy armored unit with high damage
+  \item \textbf{Catapult}: Siege unit effective against buildings
+\end{itemize}
+
+\section{Village Class}
+
+The \texttt{Village} class is the central hub managing all aspects of a player's settlement:
+
+\begin{itemize}
+  \item \textbf{Identity}: Name and level
+  \item \textbf{Population}: Current and maximum population limits
+  \item \textbf{Space}: Area usage for building placement
+  \item \textbf{Buildings}: Collection of constructed buildings
+  \item \textbf{Inhabitants}: Collection of trained population
+  \item \textbf{Resources}: ResourceManager instance
+  \item \textbf{Scores}: Defense and attack capability calculations
+  \item \textbf{Protection}: Guard period for new players
+\end{itemize}
+
+Key methods include:
+\begin{itemize}
+  \item \texttt{addBuilding()}: Validates space and adds buildings
+  \item \texttt{addInhabitant()}: Checks population limits
+  \item \texttt{calculateDefenseScore()}: Computes defensive strength
+  \item \texttt{canBuild()}: Validates building placement
+\end{itemize}
+
+The guard period (7 days for new villages) prevents attacks on new players, encouraging fair gameplay.
+
+\section{Army Class}
+
+The \texttt{Army} class (in the core package) manages attack force composition:
+
+\begin{itemize}
+  \item Collection of ArmyUnit objects
+  \item Total army size tracking
+  \item Methods to add/remove units
+  \item Attack power calculation
+  \item Casualty management during battles
+\end{itemize}
+
+This separate class allows players to compose custom armies from their trained units.
+
+\section{Game Engine}
+
+The \texttt{GameEngine} class orchestrates the overall game flow:
+
+\begin{itemize}
+  \item \textbf{Time Management}: Tracks game time and speed
+  \item \textbf{Player Management}: Maintains active players list
+  \item \textbf{Upgrade Processing}: Completes time-based upgrades
+  \item \textbf{Validation}: Enforces game rules (e.g., VillageHall level requirements)
+\end{itemize}
+
+Supporting classes provide specialized functionality:
+\begin{itemize}
+  \item \textbf{AttackSimulator}: Runs battle simulations considering unit types, defenses, and random factors
+  \item \textbf{VillageGenerator}: Creates balanced AI villages for players to attack
+  \item \textbf{ScoreCalculator}: Computes rankings based on attack/defense performance
+  \item \textbf{AttackResult}: Encapsulates battle outcomes (success, loot, casualties, stars)
+\end{itemize}
+
+\section{Player and UI}
+
+The \texttt{Player} class represents individual players:
+\begin{itemize}
+  \item Player identification (name, unique ID)
+  \item Village ownership
+  \item Statistics (attack/defense wins/losses, ranking, total loot)
+  \item Action methods (building, upgrading, attacking)
+\end{itemize}
+
+The \texttt{GameUI} class separates presentation from logic:
+\begin{itemize}
+  \item Display methods for village, menus, and battle results
+  \item Input handling for player actions
+  \item Reference to current player and game engine
+\end{itemize}
+
+This separation allows changing the UI (e.g., from console to GUI) without modifying game logic.
+
+\section{Design Principles and Justification}
+
+\subsection{Abstraction and Inheritance}
+
+The design extensively uses abstract base classes (\texttt{Building}, \texttt{Inhabitant}, \texttt{ProductionBuilding}, \texttt{DefenseBuilding}, \texttt{Collector}, \texttt{ArmyUnit}) to:
+\begin{itemize}
+  \item Share common functionality across related classes
+  \item Reduce code duplication
+  \item Enforce consistent interfaces
+  \item Enable polymorphic behavior
+\end{itemize}
+
+This hierarchy makes adding new building or inhabitant types straightforward—simply extend the appropriate abstract class and implement specific behaviors.
+
+\subsection{Encapsulation}
+
+All classes use private or protected attributes with public accessor methods, ensuring:
+\begin{itemize}
+  \item Internal state is protected from invalid modifications
+  \item Implementation details can change without affecting clients
+  \item Validation can be enforced (e.g., resource limits, population caps)
+\end{itemize}
+
+\subsection{Polymorphism}
+
+Abstract classes and inheritance enable polymorphic collections:
+\begin{itemize}
+  \item \texttt{Village} stores \texttt{Building} references, treating all building types uniformly
+  \item \texttt{Army} manages \texttt{ArmyUnit} references regardless of specific unit type
+  \item Upgrade and damage calculations work on base class references
+\end{itemize}
+
+This allows the system to handle new entity types without modifying existing code.
+
+\subsection{Separation of Concerns}
+
+The package structure cleanly separates different aspects:
+\begin{itemize}
+  \item Resource management isolated from game entities
+  \item UI separated from game logic
+  \item Game orchestration separated from domain objects
+  \item Building/inhabitant hierarchies in separate packages
+\end{itemize}
+
+This modularity improves maintainability and allows team members to work on different packages independently.
+
+\subsection{Extensibility}
+
+The design supports future extensions:
+\begin{itemize}
+  \item New building types: Extend \texttt{ProductionBuilding} or \texttt{DefenseBuilding}
+  \item New inhabitants: Extend \texttt{Collector} or \texttt{ArmyUnit}
+  \item New resources: Add to \texttt{ResourceType} enum
+  \item Enhanced UI: Implement new UI classes using the same game engine interface
+\end{itemize}
+
+\subsection{Scalability}
+
+The architecture supports large-scale gameplay:
+\begin{itemize}
+  \item Collections for buildings and inhabitants scale with village size
+  \item Time-based mechanics allow asynchronous processing
+  \item Score calculations enable ranking thousands of players
+  \item Village generation creates unlimited opponents
+\end{itemize}
+
+\section{Conclusion}
+
+This design provides a robust foundation for a village-war strategy game. The careful use of object-oriented principles creates a system that is maintainable, extensible, and aligned with the required behaviors. The modular package structure, thoughtful inheritance hierarchies, and clear separation of concerns enable both current functionality and future enhancements while maintaining code quality and reducing complexity.
 
 
-\subsection{Question 1}
-
-\lipsum[2-4]
-
-
-
-\section{Secured Java Application}
-
-The description of your Java code is here... Include any auxiliary text object for aiding your description (tables, algorithms, figures...)
-
-Do not forget to cite sources~\cite{GnutellaNet2002} if any!
-
-
-\subsection{Performance Analysis}
-
-\lipsum[2-4]
-
-
-\subsection{Conclusions}
-
-
-\bibliographystyle{ACM-Reference-Format-Journals}
-\bibliography{acmsmall-sample-bibfile}
+% \bibliographystyle{ACM-Reference-Format-Journals}
+% \bibliography{acmsmall-sample-bibfile}
 
 
 \appendix
