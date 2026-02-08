@@ -7,11 +7,7 @@ public class Farm extends ProductionBuilding {
     private int populationSupport;
     
     public Farm() {
-        super(8, 1000, new Cost(100, 50, 200, 120));
-        this.foodPerHour = 50;
-        this.populationSupport = 10;
-        this.maxWorkers = 3;
-        this.productionRate = 20;
+        super();
     }
     
     public int getFoodProduction() {

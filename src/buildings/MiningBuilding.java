@@ -8,8 +8,8 @@ public abstract class MiningBuilding extends ProductionBuilding {
     protected int storageCapacity;
     protected int currentStorage;
     
-    public MiningBuilding(int maxLevel, int maxHitPoints, Cost buildCost, ResourceType resourceType) {
-        super(maxLevel, maxHitPoints, buildCost);
+    public MiningBuilding(ResourceType resourceType) {
+        super();
         this.resourceType = resourceType;
         this.currentStorage = 0;
     }

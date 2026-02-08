@@ -8,9 +8,7 @@ public class Worker extends Inhabitant {
     private String currentTask;
     
     public Worker() {
-        super(5, 100);
-        this.trainingCost = new Cost(50, 0, 0, 30);
-        this.foodConsumption = 1;
+        super();
         this.isIdle = true;
         this.currentTask = "";
     }

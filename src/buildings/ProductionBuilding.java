@@ -7,8 +7,8 @@ public abstract class ProductionBuilding extends Building {
     protected int maxWorkers;
     protected int currentWorkers;
     
-    public ProductionBuilding(int maxLevel, int maxHitPoints, Cost buildCost) {
-        super(maxLevel, maxHitPoints, buildCost);
+    public ProductionBuilding() {
+        super();
         this.currentWorkers = 0;
     }
     

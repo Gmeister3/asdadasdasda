@@ -12,10 +12,7 @@ public abstract class Inhabitant {
     protected int foodConsumption;
     protected boolean isUpgrading;
     
-    public Inhabitant(int maxLevel, int maxHitPoints) {
-        this.maxLevel = maxLevel;
-        this.maxHitPoints = maxHitPoints;
-        this.hitPoints = maxHitPoints;
+    public Inhabitant() {
         this.level = 1;
         this.isUpgrading = false;
     }
@@ -27,7 +24,10 @@ public abstract class Inhabitant {
     }
     
     public Cost getUpgradeCost() {
-        return trainingCost.multiply(level * 1.5);
+        if (trainingCost != null) {
+            return trainingCost.multiply(level * 1.5);
+        }
+        return null;
     }
     
     public void takeDamage(int damage) {

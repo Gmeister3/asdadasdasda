@@ -6,7 +6,7 @@ public class VillageHall extends Building {
     private int villageLevel;
     
     public VillageHall() {
-        super(10, 5000, new Cost(1000, 500, 500, 600));
+        super();
         this.villageLevel = 1;
     }
     
