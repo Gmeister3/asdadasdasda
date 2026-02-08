@@ -1,0 +1,424 @@
+@startuml Village_Game_UML
+
+!define PACKAGE_RESOURCES #FFE6E6
+!define PACKAGE_BUILDINGS #E6F3FF
+!define PACKAGE_INHABITANTS #E6FFE6
+!define PACKAGE_CORE #FFF9E6
+!define PACKAGE_ENGINE #F0E6FF
+!define PACKAGE_UI #FFE6F9
+
+' ============= PACKAGE: resources =============
+package resources PACKAGE_RESOURCES {
+    
+    enum ResourceType {
+        GOLD
+        IRON
+        WOOD
+        FOOD
+    }
+    
+    class Cost {
+        - gold: int
+        - iron: int
+        - wood: int
+        - time: int
+        + Cost(gold: int, iron: int, wood: int, time: int)
+        + getTotalValue(): int
+        + multiply(factor: double): Cost
+    }
+    
+    class ResourceManager {
+        - gold: int
+        - goldCapacity: int
+        - iron: int
+        - ironCapacity: int
+        - wood: int
+        - woodCapacity: int
+        - foodProduction: int
+        - foodConsumption: int
+        + addGold(amount: int): void
+        + addIron(amount: int): void
+        + addWood(amount: int): void
+        + consumeResources(cost: Cost): boolean
+        + hasEnoughResources(cost: Cost): boolean
+        + getAvailableLoot(): Cost
+        + canSupport(population: int): boolean
+    }
+    
+    ResourceManager ..> Cost
+}
+
+' ============= PACKAGE: buildings =============
+package buildings PACKAGE_BUILDINGS {
+    
+    abstract class Building {
+        # level: int
+        # maxLevel: int
+        # hitPoints: int
+        # maxHitPoints: int
+        # positionX: int
+        # positionY: int
+        # buildCost: Cost
+        # buildTime: int
+        # isUpgrading: boolean
+        # upgradeStartTime: long
+        + Building(maxLevel: int, maxHitPoints: int, buildCost: Cost)
+        + upgrade(): void
+        + getUpgradeCost(): Cost
+        + isMaxLevel(): boolean
+        + takeDamage(damage: int): void
+        + repair(): void
+        + completeUpgrade(): void
+        + getLevel(): int
+        + getHitPoints(): int
+    }
+    
+    class VillageHall {
+        - villageLevel: int
+        + VillageHall()
+        + getAllowedBuildingLevel(): int
+        + getVillageLevel(): int
+    }
+    
+    abstract class ProductionBuilding {
+        # productionRate: int
+        # maxWorkers: int
+        # currentWorkers: int
+        + assignWorker(): void
+        + removeWorker(): void
+        + getProduction(): int
+    }
+    
+    class Farm {
+        - foodPerHour: int
+        - populationSupport: int
+        + Farm()
+        + getFoodProduction(): int
+        + getPopulationSupport(): int
+    }
+    
+    abstract class MiningBuilding {
+        # resourceType: ResourceType
+        # storageCapacity: int
+        # currentStorage: int
+        + collect(): int
+        + getResourceType(): ResourceType
+    }
+    
+    class GoldMine {
+        + GoldMine()
+    }
+    
+    class IronMine {
+        + IronMine()
+    }
+    
+    class LumberMill {
+        + LumberMill()
+    }
+    
+    abstract class DefenseBuilding {
+        # damage: int
+        # range: int
+        # attackSpeed: double
+        + attack(target: ArmyUnit): void
+        + getDamage(): int
+        + getRange(): int
+    }
+    
+    class ArcherTower {
+        - arrowCount: int
+        + ArcherTower()
+        + reload(): void
+    }
+    
+    class Cannon {
+        - splashRadius: int
+        + Cannon()
+        + fireCannon(): void
+    }
+    
+    ' Inheritance relationships
+    VillageHall --|> Building
+    ProductionBuilding --|> Building
+    DefenseBuilding --|> Building
+    Farm --|> ProductionBuilding
+    MiningBuilding --|> ProductionBuilding
+    GoldMine --|> MiningBuilding
+    IronMine --|> MiningBuilding
+    LumberMill --|> MiningBuilding
+    ArcherTower --|> DefenseBuilding
+    Cannon --|> DefenseBuilding
+    
+    Building ..> Cost
+    MiningBuilding ..> ResourceType
+}
+
+' ============= PACKAGE: inhabitants =============
+package inhabitants PACKAGE_INHABITANTS {
+    
+    abstract class Inhabitant {
+        # level: int
+        # maxLevel: int
+        # hitPoints: int
+        # maxHitPoints: int
+        # trainingCost: Cost
+        # trainingTime: int
+        # foodConsumption: int
+        # isUpgrading: boolean
+        + Inhabitant(maxLevel: int, maxHitPoints: int)
+        + upgrade(): void
+        + getUpgradeCost(): Cost
+        + takeDamage(damage: int): void
+        + isAlive(): boolean
+        + heal(): void
+    }
+    
+    class Worker {
+        - isIdle: boolean
+        - currentTask: String
+        + Worker()
+        + buildStructure(b: Building): void
+        + produceFood(): void
+        + repair(b: Building): void
+        + setIdle(idle: boolean): void
+    }
+    
+    abstract class Collector {
+        # productionCapacity: int
+        # assignedBuilding: MiningBuilding
+        + assignTo(b: MiningBuilding): void
+        + collect(): int
+        + getProductionCapacity(): int
+    }
+    
+    class GoldCollector {
+        + GoldCollector()
+    }
+    
+    class IronCollector {
+        + IronCollector()
+    }
+    
+    class WoodCollector {
+        + WoodCollector()
+    }
+    
+    abstract class ArmyUnit {
+        # damage: int
+        # attackRange: int
+        # isInArmy: boolean
+        # movementSpeed: int
+        + attack(target: Building): void
+        + getDamage(): int
+        + getAttackRange(): int
+        + deploy(): void
+    }
+    
+    class Soldier {
+        - shield: int
+        + Soldier()
+        + block(): void
+    }
+    
+    class Archer {
+        - arrows: int
+        + Archer()
+        + shoot(): void
+    }
+    
+    class Knight {
+        - armor: int
+        + Knight()
+        + charge(): void
+    }
+    
+    class Catapult {
+        - splash: int
+        + Catapult()
+        + launch(): void
+    }
+    
+    ' Inheritance relationships
+    Worker --|> Inhabitant
+    Collector --|> Inhabitant
+    ArmyUnit --|> Inhabitant
+    GoldCollector --|> Collector
+    IronCollector --|> Collector
+    WoodCollector --|> Collector
+    Soldier --|> ArmyUnit
+    Archer --|> ArmyUnit
+    Knight --|> ArmyUnit
+    Catapult --|> ArmyUnit
+    
+    Inhabitant ..> Cost
+    Collector --> "0..1" MiningBuilding : assignedTo
+    ArmyUnit ..> Building
+}
+
+' ============= PACKAGE: core =============
+package core PACKAGE_CORE {
+    
+    class Village {
+        - name: String
+        - level: int
+        - population: int
+        - maxPopulation: int
+        - area: int
+        - maxArea: int
+        - villageHall: VillageHall
+        - buildings: List<Building>
+        - inhabitants: List<Inhabitant>
+        - resources: ResourceManager
+        - defenseScore: int
+        - attackScore: int
+        - guardPeriodEnd: long
+        - inGuardPeriod: boolean
+        + Village(name: String)
+        + addBuilding(b: Building): boolean
+        + removeBuilding(b: Building): void
+        + addInhabitant(i: Inhabitant): boolean
+        + removeInhabitant(i: Inhabitant): void
+        + calculateDefenseScore(): int
+        + calculateAttackScore(): int
+        + canBuild(b: Building): boolean
+        + getAvailableWorkers(): int
+        + startGuardPeriod(duration: int): void
+    }
+    
+    class Player {
+        - playerName: String
+        - playerId: String
+        - village: Village
+        - rank: int
+        - attackWins: int
+        - attackLosses: int
+        - defenseWins: int
+        - defenseLosses: int
+        - totalLoot: int
+        + Player(name: String)
+        + buildBuilding(b: Building): boolean
+        + trainInhabitant(type: String): boolean
+        + upgradeBuilding(b: Building): boolean
+        + upgradeInhabitant(i: Inhabitant): boolean
+        + attackVillage(v: Village): AttackResult
+        + updateRank(): void
+        + getVillage(): Village
+    }
+    
+    class Army {
+        - units: List<ArmyUnit>
+        - maxSize: int
+        - totalPower: int
+        + Army()
+        + addUnit(unit: ArmyUnit): boolean
+        + removeUnit(unit: ArmyUnit): void
+        + calculatePower(): int
+        + getSize(): int
+        + deploy(): void
+        + retreat(): void
+    }
+    
+    ' Relationships
+    Village *-- "1" ResourceManager
+    Village *-- "1" VillageHall
+    Village *-- "0..*" Building
+    Village *-- "0..*" Inhabitant
+    Player *-- "1" Village
+    Army *-- "0..*" ArmyUnit
+}
+
+' ============= PACKAGE: engine =============
+package engine PACKAGE_ENGINE {
+    
+    class GameEngine {
+        - currentTime: long
+        - gameSpeed: double
+        - attackSimulator: AttackSimulator
+        - villageGenerator: VillageGenerator
+        - scoreCalculator: ScoreCalculator
+        - players: List<Player>
+        + GameEngine()
+        + startGame(): void
+        + updateTime(): void
+        + processUpgrades(v: Village): void
+        + processProduction(v: Village): void
+        + generateAttack(v: Village): void
+        + allowUpgrade(v: Village, o: Object): boolean
+        + allowBuild(v: Village, b: Building): boolean
+        + addPlayer(p: Player): void
+    }
+    
+    class AttackSimulator {
+        - random: Random
+        + simulateAttack(army: Army, village: Village): AttackResult
+        + calculateDamage(army: Army, village: Village): int
+        + determineSuccess(attackScore: int, defenseScore: int): boolean
+        + calculateLoot(village: Village, successRate: double): Cost
+    }
+    
+    class VillageGenerator {
+        - random: Random
+        + generateVillage(level: int): Village
+        + generateArmy(level: int): Army
+        + matchPlayerLevel(p: Player): Village
+        + populateBuildings(v: Village, level: int): void
+    }
+    
+    class ScoreCalculator {
+        + calculateDefenseScore(v: Village): int
+        + calculateAttackScore(army: Army): int
+        + calculateLootScore(loot: Cost): int
+        + calculateRank(p: Player): int
+    }
+    
+    class AttackResult {
+        - success: boolean
+        - successRate: double
+        - loot: Cost
+        - attackerLosses: int
+        - defenderLosses: int
+        - stars: int
+        + AttackResult(success: boolean, loot: Cost)
+        + isSuccess(): boolean
+        + getLoot(): Cost
+        + getStars(): int
+    }
+    
+    ' Relationships
+    GameEngine --> "1" AttackSimulator
+    GameEngine --> "1" VillageGenerator
+    GameEngine --> "1" ScoreCalculator
+    GameEngine --> "0..*" Player
+    AttackSimulator ..> AttackResult
+    AttackSimulator ..> Army
+    AttackSimulator ..> Village
+    AttackSimulator ..> Cost
+    VillageGenerator ..> Village
+    VillageGenerator ..> Army
+    VillageGenerator ..> Player
+    ScoreCalculator ..> Village
+    ScoreCalculator ..> Army
+    ScoreCalculator ..> Player
+    ScoreCalculator ..> Cost
+    AttackResult --> Cost
+    Player ..> AttackResult
+}
+
+' ============= PACKAGE: ui =============
+package ui PACKAGE_UI {
+    
+    class GameUI {
+        - currentPlayer: Player
+        - gameEngine: GameEngine
+        + displayVillage(): void
+        + displayBuildMenu(): void
+        + displayAttackMenu(): void
+        + handleUserInput(): void
+    }
+    
+    GameUI --> "1" Player
+    GameUI --> "1" GameEngine
+}
+
+@enduml
