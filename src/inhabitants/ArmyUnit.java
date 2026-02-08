@@ -9,8 +9,8 @@ public abstract class ArmyUnit extends Inhabitant {
     protected boolean isInArmy;
     protected int movementSpeed;
     
-    public ArmyUnit(int maxLevel, int maxHitPoints) {
-        super(maxLevel, maxHitPoints);
+    public ArmyUnit() {
+        super();
         this.isInArmy = false;
     }
     

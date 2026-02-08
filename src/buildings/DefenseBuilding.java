@@ -8,8 +8,8 @@ public abstract class DefenseBuilding extends Building {
     protected int range;
     protected double attackSpeed;
     
-    public DefenseBuilding(int maxLevel, int maxHitPoints, Cost buildCost) {
-        super(maxLevel, maxHitPoints, buildCost);
+    public DefenseBuilding() {
+        super();
     }
     
     public void attack(ArmyUnit target) {

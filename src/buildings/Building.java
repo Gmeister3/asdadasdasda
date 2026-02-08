@@ -14,11 +14,7 @@ public abstract class Building {
     protected boolean isUpgrading;
     protected long upgradeStartTime;
     
-    public Building(int maxLevel, int maxHitPoints, Cost buildCost) {
-        this.maxLevel = maxLevel;
-        this.maxHitPoints = maxHitPoints;
-        this.hitPoints = maxHitPoints;
-        this.buildCost = buildCost;
+    public Building() {
         this.level = 1;
         this.isUpgrading = false;
     }
@@ -31,7 +27,10 @@ public abstract class Building {
     }
     
     public Cost getUpgradeCost() {
-        return buildCost.multiply(level * 1.5);
+        if (buildCost != null) {
+            return buildCost.multiply(level * 1.5);
+        }
+        return null;
     }
     
     public boolean isMaxLevel() {

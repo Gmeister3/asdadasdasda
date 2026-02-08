@@ -7,8 +7,8 @@ public abstract class Collector extends Inhabitant {
     protected int productionCapacity;
     protected MiningBuilding assignedBuilding;
     
-    public Collector(int maxLevel, int maxHitPoints) {
-        super(maxLevel, maxHitPoints);
+    public Collector() {
+        super();
     }
     
     public void assignTo(MiningBuilding b) {
